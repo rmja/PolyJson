@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+	<Description>Attribute based polymorphic serialization converter for Newtonsoft.Json.</Description>
+	<PackageProjectUrl>https://github.com/rmja/PolyJson</PackageProjectUrl>
+	<PackageLicenseExpression>MIT</PackageLicenseExpression>
+	<RepositoryType>git</RepositoryType>
+	<RepositoryUrl>https://github.com/rmja/PolyJson.git</RepositoryUrl>
+	<Version>1.0.0</Version>
+  </PropertyGroup>
+
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <ProjectReference Include="..\PolyJson\PolyJson.csproj" />
+  </ItemGroup>
+
+</Project>
