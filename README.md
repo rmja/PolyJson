@@ -7,7 +7,7 @@ Attribute based, polymorphic support for System.Text.Json (and optionally Newton
 | Package name                      | Description				    | Badge |
 |-----------------------------------|-------------------------------|-------|
 | `PolyJson`                 | Basic types and System.Text.Json support				    | [![PolyJson](https://img.shields.io/nuget/vpre/PolyJson.svg)](https://www.nuget.org/packages/PolyJson) |
-| `PolyJson.NewtonsoftJson`              | Newtonsoft.Json support				    | [![PolyJson.NewtonsoftJson](https://img.shields.io/nuget/vpre/PolyJson.NewtonsoftJson.svg)](https://www.nuget.org/packages/PolyJson.NewtonsoftJson) |
+| `PolyJson.NewtonsoftJson`              | Optional Newtonsoft.Json support				    | [![PolyJson.NewtonsoftJson](https://img.shields.io/nuget/vpre/PolyJson.NewtonsoftJson.svg)](https://www.nuget.org/packages/PolyJson.NewtonsoftJson) |
 
 ## Usage
 
