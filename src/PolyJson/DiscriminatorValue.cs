@@ -34,6 +34,12 @@ namespace PolyJson
 
             lock (_lock)
             {
+                // Test cache once more within the lock before cloning
+                if (_cache.ContainsKey(type))
+                {
+                    return;
+                }
+
                 var cloned = new Dictionary<Type, string>(_cache);
                 foreach (var subType in attributedType.GetCustomAttributes<PolyJsonConverter.SubTypeAttribute>())
                 {
