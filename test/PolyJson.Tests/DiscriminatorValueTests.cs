@@ -7,6 +7,13 @@ namespace PolyJson.Tests
     public class DiscriminatorValueTests
     {
         [Fact]
+        public void CanGetNullDiscriminatorValueFromDefaultType()
+        {
+            Assert.Null(DiscriminatorValue.Get(typeof(DefaultType)));
+            Assert.Null(DiscriminatorValue.Get(typeof(DefaultType)));
+        }
+
+        [Fact]
         public void CanGetDiscriminatorValueFromSubType()
         {
             Assert.Equal("sub", DiscriminatorValue.Get(typeof(SubType)));
@@ -25,12 +32,16 @@ namespace PolyJson.Tests
             Assert.Equal(@"{""_t"":""sub""}", json);
         }
 
-        [PolyJsonConverter("_t")]
+        [PolyJsonConverter("_t", DefaultType = typeof(DefaultType))]
         [PolyJsonConverter.SubType(typeof(SubType), "sub")]
-        public class BaseType
+        public abstract class BaseType
         {
             [JsonPropertyName("_t")]
-            public string Discriminator => DiscriminatorValue.Get(GetType());
+            public string? Discriminator => DiscriminatorValue.Get(GetType());
+        }
+
+        public class DefaultType : BaseType
+        {
         }
 
         public class SubType : BaseType

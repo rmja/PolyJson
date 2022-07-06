@@ -15,27 +15,27 @@ namespace PolyJson
 
         public override bool CanConvert(Type objectType) => objectType.IsClass && GetPolyJsonConverterAttributeOrNull(objectType) is not null;
 
-        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
         {
-            object target = null;
+            object? target = null;
 
             if (reader.TokenType != JsonToken.Null)
             {
                 var json = JObject.Load(reader);
                 var subType = GetSubType(objectType, json);
-                target = Activator.CreateInstance(subType);
+                target = Activator.CreateInstance(subType)!;
                 serializer.Populate(json.CreateReader(), target);
             }
 
             return target;
         }
 
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
         {
             throw new InvalidOperationException();
         }
 
-        private PolyJsonConverterAttribute GetPolyJsonConverterAttributeOrNull(Type type)
+        private PolyJsonConverterAttribute? GetPolyJsonConverterAttributeOrNull(Type type)
         {
             if (_converterAttributeCache.TryGetValue(type, out var attribute))
             {
@@ -59,6 +59,18 @@ namespace PolyJson
             var mappings = GetMappings(baseType);
             var attribute = GetPolyJsonConverterAttribute(baseType);
             var value = json.Value<string>(attribute.DiscriminatorPropertyName);
+
+            if (value is null)
+            {
+                if (attribute.DefaultType is not null)
+                {
+                    return attribute.DefaultType;
+                }
+                else
+                {
+                    throw new JsonException("Discriminator was not found and no default type is specified");
+                }
+            }
 
             if (!mappings.TryGetValue(value, out var subType))
             {

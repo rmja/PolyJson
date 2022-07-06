@@ -8,6 +8,7 @@ namespace PolyJson.Converters
     internal class PolyJsonConverter<T> : JsonConverter<T>, IPolyJsonConverter
     {
         public JsonEncodedText DiscriminatorPropertyName { get; set; }
+        public Type? DefaultType { get; set; }
         public Dictionary<JsonEncodedText, Type> SubTypes { get; set; } = new();
 
         public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -27,7 +28,7 @@ namespace PolyJson.Converters
                     var subType = GetSubType(ref nestedReader);
 
                     // Perform the actual deserialization with the original reader
-                    return (T)JsonSerializer.Deserialize(ref reader, subType, options);
+                    return (T)JsonSerializer.Deserialize(ref reader, subType, options)!;
                 }
                 else if (nestedReader.TokenType == JsonTokenType.StartObject || nestedReader.TokenType == JsonTokenType.StartArray)
                 {
@@ -44,12 +45,17 @@ namespace PolyJson.Converters
                 }
             }
 
+            if (DefaultType is not null)
+            {
+                return (T)JsonSerializer.Deserialize(ref reader, DefaultType, options)!;
+            }
+
             throw new JsonException($"Unable to find discriminator property '{DiscriminatorPropertyName}'");
         }
 
         public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
         {
-            JsonSerializer.Serialize<object>(writer, value, options);
+            JsonSerializer.Serialize<object>(writer, value!, options);
         }
 
         private Type GetSubType(ref Utf8JsonReader reader)

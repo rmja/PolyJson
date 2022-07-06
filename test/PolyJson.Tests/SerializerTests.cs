@@ -9,14 +9,14 @@ namespace PolyJson.Tests
     {
         protected override string Serialize(object value) => JsonSerializer.Serialize(value);
 
-        protected override T Deserialize<T>(string value) => JsonSerializer.Deserialize<T>(value);
+        protected override T Deserialize<T>(string value) => JsonSerializer.Deserialize<T>(value)!;
     }
 
     public class NewtonsoftJsonSerializerTests : SerializerTests
     {
         protected override string Serialize(object value) => Newtonsoft.Json.JsonConvert.SerializeObject(value);
 
-        protected override T Deserialize<T>(string value) => Newtonsoft.Json.JsonConvert.DeserializeObject<T>(value);
+        protected override T Deserialize<T>(string value) => Newtonsoft.Json.JsonConvert.DeserializeObject<T>(value)!;
     }
 
     public abstract class SerializerTests
@@ -54,23 +54,59 @@ namespace PolyJson.Tests
             Assert.Equal(cow.Lives, deserializedCow.Lives);
         }
 
+        [Fact]
+        public void CanSerializeToDefaultType()
+        {
+            // Given
+            var animal = new DefaultAnimal { Id = 17 };
+
+            // When
+            var json = Serialize(animal);
+
+            // Then
+            Assert.Equal("{\"Id\":17}", json);
+        }
+
+        [Fact]
+        public void CanDeserializeToDefaultType()
+        {
+            // Given
+            var json = "{\"Id\":17}";
+
+            // When
+            var animal = Deserialize<Animal>(json);
+
+            // Then
+            Assert.IsType<DefaultAnimal>(animal);
+            Assert.Null(animal.Discriminator);
+            Assert.Equal(17, animal.Id);
+        }
+
         protected abstract string Serialize(object value);
 
         protected abstract T Deserialize<T>(string value);
     }
 
-    [PolyJsonConverter("_t")]
+    [PolyJsonConverter("_t", DefaultType = typeof(DefaultAnimal))]
     [Newtonsoft.Json.JsonConverter(typeof(PolyJsonNewtonsoftJsonConverter))]
     [PolyJsonConverter.SubType(typeof(Dog), "dog")]
     [PolyJsonConverter.SubType(typeof(Cat), "cat")]
     public abstract class Animal
     {
         [JsonPropertyName("_t")]
-        [Newtonsoft.Json.JsonProperty("_t")]
-        public string Discriminator { get; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [Newtonsoft.Json.JsonProperty("_t", NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string? Discriminator { get; }
         public int Id { get; set; }
 
-        protected Animal(string discriminator) => Discriminator = discriminator;
+        protected Animal(string? discriminator) => Discriminator = discriminator;
+    }
+
+    public class DefaultAnimal : Animal
+    {
+        public DefaultAnimal() : base(null)
+        {
+        }
     }
 
     public class Dog : Animal

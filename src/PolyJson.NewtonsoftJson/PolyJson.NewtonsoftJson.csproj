@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
+	<Nullable>enable</Nullable>
 	<Description>Attribute based polymorphic serialization converter for Newtonsoft.Json.</Description>
 	<PackageProjectUrl>https://github.com/rmja/PolyJson</PackageProjectUrl>
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>

@@ -8,6 +8,7 @@ namespace PolyJson
     public class PolyJsonConverterAttribute : JsonConverterAttribute
     {
         public string DiscriminatorPropertyName { get; set; }
+        public Type? DefaultType { get; set; }
 
         public PolyJsonConverterAttribute(string distriminatorPropertyName)
         {
@@ -18,10 +19,11 @@ namespace PolyJson
         {
             // Instantiate converter
             var converterType = typeof(PolyJsonConverter<>).MakeGenericType(typeToConvert);
-            var converter = (IPolyJsonConverter)Activator.CreateInstance(converterType);
+            var converter = (IPolyJsonConverter)Activator.CreateInstance(converterType)!;
 
             // Configure the converter
             converter.DiscriminatorPropertyName = JsonEncodedText.Encode(DiscriminatorPropertyName);
+            converter.DefaultType = DefaultType;
 
             var subTypes = (PolyJsonConverter.SubTypeAttribute[])typeToConvert.GetCustomAttributes(typeof(PolyJsonConverter.SubTypeAttribute), inherit: false);
             foreach (var attribute in subTypes)
