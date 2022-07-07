@@ -17,6 +17,11 @@ namespace PolyJson
 
         public override JsonConverter CreateConverter(Type typeToConvert)
         {
+            if (typeToConvert == DefaultType)
+            {
+                throw new InvalidOperationException("The default type cannot be the same as the type decorated with the JsonConverter attribute");
+            }
+
             // Instantiate converter
             var converterType = typeof(PolyJsonConverter<>).MakeGenericType(typeToConvert);
             var converter = (IPolyJsonConverter)Activator.CreateInstance(converterType)!;
