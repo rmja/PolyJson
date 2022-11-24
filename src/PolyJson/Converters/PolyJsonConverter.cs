@@ -16,6 +16,11 @@ namespace PolyJson.Converters
             // Create a reader copy that we can use to find the discriminator value without advancing the original reader
             var nestedReader = reader;
 
+            if (nestedReader.TokenType == JsonTokenType.None)
+            {
+                nestedReader.Read();
+            }
+
             while (nestedReader.Read())
             {
                 if (nestedReader.TokenType == JsonTokenType.PropertyName &&
@@ -34,13 +39,15 @@ namespace PolyJson.Converters
                 {
                     // Skip until TokenType is EndObject/EndArray
                     // Skip() always throws if IsFinalBlock == false, even when it could actually skip.
-                    // We therefore invoke TrySkip(), and then call Skip() if it in fact coult not skip just to throw the exception
+                    // We therefore invoke TrySkip(), and then return the progressed reader if it was exhaused
                     // For reference, see:
                     // https://stackoverflow.com/questions/63038334/how-do-i-handle-partial-json-in-a-jsonconverter-while-using-deserializeasync-on
-                    // https://github.com/dotnet/runtime/blob/main/src/libraries/System.Text.Json/src/System/Text/Json/Reader/Utf8JsonReader.cs#L303-L310
+                    // https://github.com/dotnet/runtime/blob/main/src/libraries/System.Text.Json/src/System/Text/Json/Reader/Utf8JsonReader.cs#L310-L318
                     if (!nestedReader.TrySkip())
                     {
-                        nestedReader.Skip();
+                        // Do not advance the reader, i.e. do not set reader = nestedReader,
+                        // as that would cause us to have an incomplete object available for full final deserialization.
+                        return default!;
                     }
                 }
             }
@@ -50,7 +57,12 @@ namespace PolyJson.Converters
                 return (T)JsonSerializer.Deserialize(ref reader, DefaultType, options)!;
             }
 
-            throw new JsonException($"Unable to find discriminator property '{DiscriminatorPropertyName}'");
+            if (reader.IsFinalBlock)
+            {
+                throw new JsonException($"Unable to find discriminator property '{DiscriminatorPropertyName}'");
+            }
+
+            return default!;
         }
 
         public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
