@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
 	<Nullable>enable</Nullable>
 	<Authors>Rasmus Melchior Jacobsen</Authors>
 	<Description>Attribute based polymorphic serialization with System.Text.Json.</Description>
@@ -11,5 +11,9 @@
 	<RepositoryUrl>https://github.com/rmja/PolyJson.git</RepositoryUrl>
 	<Version>1.1.0</Version>
   </PropertyGroup>
+
+	<ItemGroup>
+		<InternalsVisibleTo Include="PolyJson.Tests" />
+	</ItemGroup>
 
 </Project>
