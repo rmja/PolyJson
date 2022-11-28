@@ -39,7 +39,7 @@ namespace PolyJson.Converters
                 {
                     // Skip until TokenType is EndObject/EndArray
                     // Skip() always throws if IsFinalBlock == false, even when it could actually skip.
-                    // We therefore invoke TrySkip(), and then return the progressed reader if it was exhaused
+                    // We therefore use TrySkip(), and return the progressed reader if it was exhaused
                     // For reference, see:
                     // https://stackoverflow.com/questions/63038334/how-do-i-handle-partial-json-in-a-jsonconverter-while-using-deserializeasync-on
                     // https://github.com/dotnet/runtime/blob/main/src/libraries/System.Text.Json/src/System/Text/Json/Reader/Utf8JsonReader.cs#L310-L318
@@ -47,6 +47,9 @@ namespace PolyJson.Converters
                     {
                         // Do not advance the reader, i.e. do not set reader = nestedReader,
                         // as that would cause us to have an incomplete object available for full final deserialization.
+
+                        // NOTE: This does not actually work.
+                        // The json reader will throw that the converter consumed too few bytes.
                         return default!;
                     }
                 }
