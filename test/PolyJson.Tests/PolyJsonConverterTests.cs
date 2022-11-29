@@ -1,8 +1,12 @@
 ﻿using PolyJson.Converters;
 using System;
 using System.Buffers;
+using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace PolyJson.Tests
@@ -10,43 +14,38 @@ namespace PolyJson.Tests
     public class PolyJsonConverterTests
     {
         [Fact]
-        public void CanPartialRead()
+        public async Task CanPartialRead()
         {
             // Given
-            var converter = new PolyJsonConverter<Model>()
-            {
-                DiscriminatorPropertyName = JsonEncodedText.Encode("Discriminator"),
-                SubTypes =
-                {
-                    [JsonEncodedText.Encode("sub")] = typeof(SubModel)
-                }
-            };
-            var options = new JsonSerializerOptions() { Converters = { converter } };
+            var options = new JsonSerializerOptions() { DefaultBufferSize = 16 };
 
-            var model = new SubModel() { Discriminator = "sub", Name = "name", Large = new() };
-            var json = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(model, options)).AsMemory();
+            var models = Enumerable.Range(0, 1000).Select(_ => new DefaultModel() { Name = "name" }).ToArray();
+            var json = JsonSerializer.Serialize(models);
+            var jsonBytes = Encoding.UTF8.GetBytes(json).AsMemory();
+
+            var stream = new ChunkStream(jsonBytes, chunkSize: options.DefaultBufferSize);
 
             // When
-            var reader = new Utf8JsonReader(new ReadOnlySequence<byte>(json[..16]), isFinalBlock: false, new JsonReaderState());
-            var first = converter.Read(ref reader, typeof(Model), options);
-            
-            reader = new Utf8JsonReader(new ReadOnlySequence<byte>(json).Slice(reader.Position), isFinalBlock: true, reader.CurrentState);
-            var second = converter.Read(ref reader, typeof(Model), options);
-
-            // Then
-            Assert.Null(first);
-            Assert.NotNull(second);
+            var deserialized = await JsonSerializer.DeserializeAsync<Model[]>(stream, options);
         }
 
-        [PolyJsonConverter("Discriminator")]
+        [PolyJsonConverter("Discriminator", DefaultType = typeof(DefaultModel))]
         [PolyJsonConverter.SubType(typeof(SubModel), "sub")]
         abstract class Model
         {
-            public LargeNestedModel? Large { get; set; }
+            public LargeNestedModel A { get; set; } = new();
+            public LargeNestedModel B { get; set; } = new();
+            public LargeNestedModel C { get; set; } = new();
             public string? Name { get; set; }
 
             // Must be later so that we do not immediately find the discriminator
+            [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
             public string? Discriminator { get; set; }
+        }
+
+        class DefaultModel : Model
+        {
+
         }
 
         class LargeNestedModel
@@ -58,6 +57,57 @@ namespace PolyJson.Tests
         class SubModel : Model
         {
 
+        }
+
+        class ChunkStream : Stream
+        {
+            private readonly Memory<byte> _buffer;
+            private readonly int _chunkSize;
+            private int _position = 0;
+
+            public override bool CanRead => true;
+
+            public override bool CanSeek => false;
+
+            public override bool CanWrite => throw new NotImplementedException();
+
+            public override long Length => _buffer.Length;
+
+            public override long Position { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+            public ChunkStream(Memory<byte> buffer, int chunkSize)
+            {
+                _buffer = buffer;
+                _chunkSize = chunkSize;
+            }
+
+            public override int Read(byte[] buffer, int offset, int count)
+            {
+                var length = Math.Min(_buffer.Length - _position, Math.Min(count, _chunkSize));
+                _buffer.Slice(_position, length).CopyTo(buffer.AsMemory(offset, count));
+                _position += length;
+                return length;
+            }
+
+            public override void Write(byte[] buffer, int offset, int count)
+            {
+                throw new NotImplementedException();
+            }
+
+            public override long Seek(long offset, SeekOrigin origin)
+            {
+                throw new NotImplementedException();
+            }
+
+            public override void SetLength(long value)
+            {
+                throw new NotImplementedException();
+            }
+
+            public override void Flush()
+            {
+                throw new NotImplementedException();
+            }
         }
     }
 }

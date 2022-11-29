@@ -39,7 +39,7 @@ namespace PolyJson.Converters
                 {
                     // Skip until TokenType is EndObject/EndArray
                     // Skip() always throws if IsFinalBlock == false, even when it could actually skip.
-                    // We therefore use TrySkip(), and return the progressed reader if it was exhaused
+                    // We therefore use TrySkip() and if that is impossible, we simply return without advancing the original reader.
                     // For reference, see:
                     // https://stackoverflow.com/questions/63038334/how-do-i-handle-partial-json-in-a-jsonconverter-while-using-deserializeasync-on
                     // https://github.com/dotnet/runtime/blob/main/src/libraries/System.Text.Json/src/System/Text/Json/Reader/Utf8JsonReader.cs#L310-L318
@@ -49,9 +49,14 @@ namespace PolyJson.Converters
                         // as that would cause us to have an incomplete object available for full final deserialization.
 
                         // NOTE: This does not actually work.
-                        // The json reader will throw that the converter consumed too few bytes.
+                        // The System.Text.Json reader will throw that the converter consumed too few bytes.
                         return default!;
                     }
+                }
+                else if (nestedReader.TokenType == JsonTokenType.EndObject)
+                {
+                    // We have exhausted the search within the object for a discriminator but it was not found.
+                    break;
                 }
             }
 
@@ -77,6 +82,11 @@ namespace PolyJson.Converters
         {
             if (reader.TokenType != JsonTokenType.String)
             {
+                if (reader.TokenType == JsonTokenType.Null && DefaultType is not null)
+                {
+                    return DefaultType;
+                }
+
                 throw new JsonException($"Expected string discriminator value, got '{reader.TokenType}'");
             }
 
