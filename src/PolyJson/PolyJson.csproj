@@ -9,7 +9,7 @@
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	<RepositoryType>git</RepositoryType>
 	<RepositoryUrl>https://github.com/rmja/PolyJson.git</RepositoryUrl>
-	<Version>1.2.0</Version>
+	<Version>1.2.1</Version>
   </PropertyGroup>
 
 	<ItemGroup>
