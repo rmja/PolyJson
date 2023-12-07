@@ -8,14 +8,24 @@ namespace PolyJson
 {
     public class PolyJsonNewtonsoftJsonConverter : JsonConverter
     {
-        private readonly ConcurrentDictionary<Type, PolyJsonConverterAttribute> _converterAttributeCache = new();
-        private readonly ConcurrentDictionary<Type, Dictionary<string, Type>> _mappingsCache = new();
+        private readonly ConcurrentDictionary<
+            Type,
+            PolyJsonConverterAttribute
+        > _converterAttributeCache = new();
+        private readonly ConcurrentDictionary<Type, Dictionary<string, Type>> _mappingsCache =
+            new();
 
         public override bool CanWrite => false;
 
-        public override bool CanConvert(Type objectType) => objectType.IsClass && GetPolyJsonConverterAttributeOrNull(objectType) is not null;
+        public override bool CanConvert(Type objectType) =>
+            objectType.IsClass && GetPolyJsonConverterAttributeOrNull(objectType) is not null;
 
-        public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
+        public override object? ReadJson(
+            JsonReader reader,
+            Type objectType,
+            object? existingValue,
+            JsonSerializer serializer
+        )
         {
             object? target = null;
 
@@ -42,7 +52,8 @@ namespace PolyJson
                 return attribute;
             }
 
-            var attributes = (PolyJsonConverterAttribute[])type.GetCustomAttributes(typeof(PolyJsonConverterAttribute), inherit: true);
+            var attributes = (PolyJsonConverterAttribute[])
+                type.GetCustomAttributes(typeof(PolyJsonConverterAttribute), inherit: true);
             if (attributes.Length == 0)
             {
                 return null;
@@ -52,7 +63,9 @@ namespace PolyJson
             return attribute;
         }
 
-        private PolyJsonConverterAttribute GetPolyJsonConverterAttribute(Type type) => GetPolyJsonConverterAttributeOrNull(type) ?? throw new InvalidOperationException("PolyJsonConverterAttribute was not found");
+        private PolyJsonConverterAttribute GetPolyJsonConverterAttribute(Type type) =>
+            GetPolyJsonConverterAttributeOrNull(type)
+            ?? throw new InvalidOperationException("PolyJsonConverterAttribute was not found");
 
         private Type GetSubType(Type baseType, JObject json)
         {
@@ -68,16 +81,23 @@ namespace PolyJson
                 }
                 else
                 {
-                    throw new JsonException("Discriminator was not found and no default type is specified");
+                    throw new JsonException(
+                        "Discriminator was not found and no default type is specified"
+                    );
                 }
             }
 
-            if (!mappings.TryGetValue(value, out var subType))
+            if (mappings.TryGetValue(value, out var subType))
             {
-                throw new JsonException($"'{value}' is not a valid discriminator value");
+                return subType;
             }
 
-            return subType;
+            if (attribute.UnknownType is not null)
+            {
+                return attribute.UnknownType;
+            }
+
+            throw new JsonException($"'{value}' is not a valid discriminator value");
         }
 
         private Dictionary<string, Type> GetMappings(Type baseType)
@@ -88,7 +108,11 @@ namespace PolyJson
             }
 
             mappings = new Dictionary<string, Type>();
-            var subTypes = (PolyJsonConverter.SubTypeAttribute[])baseType.GetCustomAttributes(typeof(PolyJsonConverter.SubTypeAttribute), inherit: false);
+            var subTypes = (PolyJsonConverter.SubTypeAttribute[])
+                baseType.GetCustomAttributes(
+                    typeof(PolyJsonConverter.SubTypeAttribute),
+                    inherit: false
+                );
             foreach (var attribute in subTypes)
             {
                 mappings.Add(attribute.DiscriminatorValue, attribute.SubType);

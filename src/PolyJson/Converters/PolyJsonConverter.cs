@@ -9,9 +9,14 @@ namespace PolyJson.Converters
     {
         public JsonEncodedText DiscriminatorPropertyName { get; set; }
         public Type? DefaultType { get; set; }
+        public Type? UnknownType { get; set; }
         public Dictionary<JsonEncodedText, Type> SubTypes { get; set; } = new();
 
-        public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        public override T Read(
+            ref Utf8JsonReader reader,
+            Type typeToConvert,
+            JsonSerializerOptions options
+        )
         {
             // Create a reader copy that we can use to find the discriminator value without advancing the original reader
             var nestedReader = reader;
@@ -23,8 +28,10 @@ namespace PolyJson.Converters
 
             while (nestedReader.Read())
             {
-                if (nestedReader.TokenType == JsonTokenType.PropertyName &&
-                    nestedReader.ValueTextEquals(DiscriminatorPropertyName.EncodedUtf8Bytes))
+                if (
+                    nestedReader.TokenType == JsonTokenType.PropertyName
+                    && nestedReader.ValueTextEquals(DiscriminatorPropertyName.EncodedUtf8Bytes)
+                )
                 {
                     // Advance the reader to the property value
                     nestedReader.Read();
@@ -35,7 +42,10 @@ namespace PolyJson.Converters
                     // Perform the actual deserialization with the original reader
                     return (T)JsonSerializer.Deserialize(ref reader, subType, options)!;
                 }
-                else if (nestedReader.TokenType == JsonTokenType.StartObject || nestedReader.TokenType == JsonTokenType.StartArray)
+                else if (
+                    nestedReader.TokenType == JsonTokenType.StartObject
+                    || nestedReader.TokenType == JsonTokenType.StartArray
+                )
                 {
                     // Skip until TokenType is EndObject/EndArray
                     // Skip() always throws if IsFinalBlock == false, even when it could actually skip.
@@ -67,7 +77,9 @@ namespace PolyJson.Converters
 
             if (reader.IsFinalBlock)
             {
-                throw new JsonException($"Unable to find discriminator property '{DiscriminatorPropertyName}'");
+                throw new JsonException(
+                    $"Unable to find discriminator property '{DiscriminatorPropertyName}'"
+                );
             }
 
             return default!;
@@ -87,7 +99,9 @@ namespace PolyJson.Converters
                     return DefaultType;
                 }
 
-                throw new JsonException($"Expected string discriminator value, got '{reader.TokenType}'");
+                throw new JsonException(
+                    $"Expected string discriminator value, got '{reader.TokenType}'"
+                );
             }
 
             foreach (var (subValue, subType) in SubTypes)
@@ -96,6 +110,11 @@ namespace PolyJson.Converters
                 {
                     return subType;
                 }
+            }
+
+            if (UnknownType is not null)
+            {
+                return UnknownType;
             }
 
             throw new JsonException($"'{reader.GetString()}' is not a valid discriminator value");

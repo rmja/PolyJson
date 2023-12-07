@@ -29,7 +29,9 @@ namespace PolyJson
             var attributedType = GetAttributedType(type);
             if (attributedType is null)
             {
-                throw new InvalidOperationException($"The type {type} or any of its base class are attributed with the PolyJsonConverter attribute");
+                throw new InvalidOperationException(
+                    $"The type {type} or any of its base class are attributed with the PolyJsonConverter attribute"
+                );
             }
 
             lock (_lock)
@@ -47,8 +49,14 @@ namespace PolyJson
                 {
                     cloned.Add(attribute.DefaultType, null);
                 }
+                if (attribute.UnknownType is not null)
+                {
+                    cloned.Add(attribute.UnknownType, null);
+                }
 
-                foreach (var subType in attributedType.GetCustomAttributes<PolyJsonConverter.SubTypeAttribute>())
+                foreach (
+                    var subType in attributedType.GetCustomAttributes<PolyJsonConverter.SubTypeAttribute>()
+                )
                 {
                     cloned.Add(subType.SubType, subType.DiscriminatorValue);
                 }
@@ -57,7 +65,9 @@ namespace PolyJson
 
             if (!_cache.ContainsKey(type))
             {
-                throw new ArgumentException($"The type {type} is not a subtype of {attributedType}");
+                throw new ArgumentException(
+                    $"The type {type} is not a subtype of {attributedType}"
+                );
             }
         }
 

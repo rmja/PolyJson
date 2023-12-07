@@ -14,9 +14,11 @@ namespace PolyJson.Tests
 
     public class NewtonsoftJsonSerializerTests : SerializerTests
     {
-        protected override string Serialize(object value) => Newtonsoft.Json.JsonConvert.SerializeObject(value);
+        protected override string Serialize(object value) =>
+            Newtonsoft.Json.JsonConvert.SerializeObject(value);
 
-        protected override T Deserialize<T>(string value) => Newtonsoft.Json.JsonConvert.DeserializeObject<T>(value)!;
+        protected override T Deserialize<T>(string value) =>
+            Newtonsoft.Json.JsonConvert.DeserializeObject<T>(value)!;
     }
 
     public abstract class SerializerTests
@@ -25,17 +27,9 @@ namespace PolyJson.Tests
         public void CanSerializeAndDeserialize()
         {
             // Given
-            var dog = new Dog()
-            {
-                Id = 1,
-                CanBark = true
-            };
+            var dog = new Dog() { Id = 1, CanBark = true };
 
-            var cow = new Cat()
-            {
-                Id = 2,
-                Lives = 9
-            };
+            var cow = new Cat() { Id = 2, Lives = 9 };
             var animals = new List<Animal> { dog, cow };
 
             // When
@@ -43,7 +37,10 @@ namespace PolyJson.Tests
             var deserializedAnimals = Deserialize<List<Animal>>(json);
 
             // Then
-            Assert.Equal("[{\"CanBark\":true,\"_t\":\"dog\",\"Id\":1},{\"Lives\":9,\"_t\":\"cat\",\"Id\":2}]", json);
+            Assert.Equal(
+                "[{\"CanBark\":true,\"_t\":\"dog\",\"Id\":1},{\"Lives\":9,\"_t\":\"cat\",\"Id\":2}]",
+                json
+            );
 
             Assert.Equal(2, deserializedAnimals.Count);
             var deserializedDog = Assert.IsType<Dog>(deserializedAnimals[0]);
@@ -82,12 +79,31 @@ namespace PolyJson.Tests
             Assert.Equal(17, animal.Id);
         }
 
+        [Fact]
+        public void CanDeserializeToUnknownType()
+        {
+            // Given
+            var json = "{\"_t\":\"horse\", \"Id\":17}";
+
+            // When
+            var animal = Deserialize<Animal>(json);
+
+            // Then
+            Assert.IsType<UnknownAnimal>(animal);
+            Assert.Null(animal.Discriminator);
+            Assert.Equal(17, animal.Id);
+        }
+
         protected abstract string Serialize(object value);
 
         protected abstract T Deserialize<T>(string value);
     }
 
-    [PolyJsonConverter("_t", DefaultType = typeof(DefaultAnimal))]
+    [PolyJsonConverter(
+        "_t",
+        DefaultType = typeof(DefaultAnimal),
+        UnknownType = typeof(UnknownAnimal)
+    )]
     [Newtonsoft.Json.JsonConverter(typeof(PolyJsonNewtonsoftJsonConverter))]
     [PolyJsonConverter.SubType(typeof(Dog), "dog")]
     [PolyJsonConverter.SubType(typeof(Cat), "cat")]
@@ -95,7 +111,10 @@ namespace PolyJson.Tests
     {
         [JsonPropertyName("_t")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        [Newtonsoft.Json.JsonProperty("_t", NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [Newtonsoft.Json.JsonProperty(
+            "_t",
+            NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore
+        )]
         public string? Discriminator { get; }
         public int Id { get; set; }
 
@@ -104,26 +123,29 @@ namespace PolyJson.Tests
 
     public class DefaultAnimal : Animal
     {
-        public DefaultAnimal() : base(null)
-        {
-        }
+        public DefaultAnimal()
+            : base(null) { }
+    }
+
+    public class UnknownAnimal : Animal
+    {
+        public UnknownAnimal()
+            : base(null) { }
     }
 
     public class Dog : Animal
     {
         public bool CanBark { get; set; }
 
-        public Dog() : base("dog")
-        {
-        }
+        public Dog()
+            : base("dog") { }
     }
 
     public class Cat : Animal
     {
         public int Lives { get; set; }
 
-        public Cat() : base("cat")
-        {
-        }
+        public Cat()
+            : base("cat") { }
     }
 }

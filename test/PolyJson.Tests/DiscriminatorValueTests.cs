@@ -40,13 +40,10 @@ namespace PolyJson.Tests
             public string? Discriminator => DiscriminatorValue.Get(GetType());
         }
 
-        public class DefaultType : BaseType
-        {
-        }
+        public class DefaultType : BaseType { }
 
-        public class SubType : BaseType
-        {
+        public class UnknownType : BaseType { }
 
-        }
+        public class SubType : BaseType { }
     }
 }

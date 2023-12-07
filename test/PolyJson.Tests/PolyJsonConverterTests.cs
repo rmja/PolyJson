@@ -19,7 +19,10 @@ namespace PolyJson.Tests
             // Given
             var options = new JsonSerializerOptions() { DefaultBufferSize = 16 };
 
-            var models = Enumerable.Range(0, 1000).Select(_ => new DefaultModel() { Name = "name" }).ToArray();
+            var models = Enumerable
+                .Range(0, 1000)
+                .Select(_ => new DefaultModel() { Name = "name" })
+                .ToArray();
             var json = JsonSerializer.Serialize(models);
             var jsonBytes = Encoding.UTF8.GetBytes(json).AsMemory();
 
@@ -43,10 +46,7 @@ namespace PolyJson.Tests
             public string? Discriminator { get; set; }
         }
 
-        class DefaultModel : Model
-        {
-
-        }
+        class DefaultModel : Model { }
 
         class LargeNestedModel
         {
@@ -54,10 +54,7 @@ namespace PolyJson.Tests
             public int ThatWeAreLikelyToSkip { get; set; }
         }
 
-        class SubModel : Model
-        {
-
-        }
+        class SubModel : Model { }
 
         class ChunkStream : Stream
         {
@@ -73,7 +70,11 @@ namespace PolyJson.Tests
 
             public override long Length => _buffer.Length;
 
-            public override long Position { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+            public override long Position
+            {
+                get => throw new NotImplementedException();
+                set => throw new NotImplementedException();
+            }
 
             public ChunkStream(Memory<byte> buffer, int chunkSize)
             {

@@ -8,6 +8,7 @@ namespace PolyJson.Converters
     {
         JsonEncodedText DiscriminatorPropertyName { get; set; }
         Type? DefaultType { get; set; }
+        Type? UnknownType { get; set; }
         Dictionary<JsonEncodedText, Type> SubTypes { get; set; }
     }
 }
