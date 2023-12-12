@@ -75,9 +75,10 @@ namespace PolyJson
 
             if (value is null)
             {
-                if (attribute.DefaultType is not null)
+                var undefinedType = attribute.UndefinedType ?? attribute.DefaultType;
+                if (undefinedType is not null)
                 {
-                    return attribute.DefaultType;
+                    return undefinedType;
                 }
                 else
                 {
@@ -92,9 +93,10 @@ namespace PolyJson
                 return subType;
             }
 
-            if (attribute.UnknownType is not null)
+            var unknownType = attribute.UnknownType ?? attribute.DefaultType;
+            if (unknownType is not null)
             {
-                return attribute.UnknownType;
+                return unknownType;
             }
 
             throw new JsonException($"'{value}' is not a valid discriminator value");

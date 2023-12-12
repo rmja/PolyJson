@@ -8,8 +8,8 @@ namespace PolyJson.Converters
     internal class PolyJsonConverter<T> : JsonConverter<T>, IPolyJsonConverter
     {
         public JsonEncodedText DiscriminatorPropertyName { get; set; }
-        public Type? DefaultType { get; set; }
-        public Type? UnknownType { get; set; }
+        public Type? UndefinedOrDefaultType { get; set; }
+        public Type? UnknownOrDefaultType { get; set; }
         public Dictionary<JsonEncodedText, Type> SubTypes { get; set; } = new();
 
         public override T Read(
@@ -70,9 +70,9 @@ namespace PolyJson.Converters
                 }
             }
 
-            if (DefaultType is not null)
+            if (UndefinedOrDefaultType is not null)
             {
-                return (T)JsonSerializer.Deserialize(ref reader, DefaultType, options)!;
+                return (T)JsonSerializer.Deserialize(ref reader, UndefinedOrDefaultType, options)!;
             }
 
             if (reader.IsFinalBlock)
@@ -94,9 +94,9 @@ namespace PolyJson.Converters
         {
             if (reader.TokenType != JsonTokenType.String)
             {
-                if (reader.TokenType == JsonTokenType.Null && DefaultType is not null)
+                if (reader.TokenType == JsonTokenType.Null && UndefinedOrDefaultType is not null)
                 {
-                    return DefaultType;
+                    return UndefinedOrDefaultType;
                 }
 
                 throw new JsonException(
@@ -112,9 +112,9 @@ namespace PolyJson.Converters
                 }
             }
 
-            if (UnknownType is not null)
+            if (UnknownOrDefaultType is not null)
             {
-                return UnknownType;
+                return UnknownOrDefaultType;
             }
 
             throw new JsonException($"'{reader.GetString()}' is not a valid discriminator value");

@@ -10,12 +10,17 @@ namespace PolyJson
         public string DiscriminatorPropertyName { get; set; }
 
         /// <summary>
-        /// The type to use when no discriminator property is found
+        /// The type to use when no discriminator property is found or its value holds a not configured value.
         /// </summary>
         public Type? DefaultType { get; set; }
 
         /// <summary>
-        /// The type to use when the discriminator property is defined but holds a not configured value
+        /// The type to use when no discriminator property is found. <see cref="DefaultType"/> is used if not specified.
+        /// </summary>
+        public Type? UndefinedType { get; set; }
+
+        /// <summary>
+        /// The type to use when the discriminator property is defined but holds a not configured value. <see cref="DefaultType"/> is used if not specified.
         /// </summary>
         public Type? UnknownType { get; set; }
 
@@ -31,10 +36,13 @@ namespace PolyJson
 
         public override JsonConverter CreateConverter(Type typeToConvert)
         {
-            if (typeToConvert == DefaultType)
+            var undefinedType = UndefinedType ?? DefaultType;
+            var unknownType = UnknownType ?? DefaultType;
+
+            if (typeToConvert == undefinedType || typeToConvert == unknownType)
             {
                 throw new InvalidOperationException(
-                    "The default type cannot be the same as the type decorated with the JsonConverter attribute"
+                    "The undefined or unknown types cannot be the same as the type decorated with the JsonConverter attribute"
                 );
             }
 
@@ -44,8 +52,8 @@ namespace PolyJson
 
             // Configure the converter
             converter.DiscriminatorPropertyName = JsonEncodedText.Encode(DiscriminatorPropertyName);
-            converter.DefaultType = DefaultType;
-            converter.UnknownType = UnknownType;
+            converter.UndefinedOrDefaultType = undefinedType;
+            converter.UnknownOrDefaultType = unknownType;
 
             var subTypes = (PolyJsonConverter.SubTypeAttribute[])
                 typeToConvert.GetCustomAttributes(
